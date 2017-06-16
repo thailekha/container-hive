@@ -103,8 +103,10 @@ class App extends Component {
   }
 
   getContainerIdsOfNetworkRequest (networkRequest) {
+    //console.log(this.state.containers.map(c => c.NetworkSettings.Networks))
     return this.state.containers.reduce((acc, container) => {
       _.forIn(container.NetworkSettings.Networks, network => {
+        console.log(network.IPAddress, 'vs', networkRequest.from)
         if (network.IPAddress === networkRequest.from) {
           acc.from = container.Id
         } else if (network.IPAddress === networkRequest.to) {
@@ -127,9 +129,11 @@ class App extends Component {
         if (this.state.stiffness === 0) { // || !this.state.focus) {
           break
         }
-
+        console.log(parsedMessage.data)
         const containerIds = this.getContainerIdsOfNetworkRequest(parsedMessage.data)
+        console.log(containerIds)
         if (containerIds.from && containerIds.to) {
+          console.log('############################################\n' + containerIds.from + ' to ' + containerIds.to)
           const id = `net${Date.now()}`
           // console.log('add network request', id)
           this.setState({networkRequests: [...this.state.networkRequests, {id, request: {...containerIds}}]})

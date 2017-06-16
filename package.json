@@ -28,7 +28,7 @@
     "uws": "^0.12.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "PORT=29900 react-scripts start",
     "start-server": "nodemon lib/index.js --watch lib --exec babel-node --presets es2015,stage-2",
     "build-server": "babel lib -d dist --presets es2015,stage-2",
     "serve-server": "node dist/index.js",

@@ -19,36 +19,11 @@ app.get('/', (req, res) => {
 
 // if sysdig is already running, use existing container. Otherwise, start a new one
 const sysdigContainerName = 'sysdig_container_hive'
-let sysdigProcess
-execa.shell(`docker ps | grep ${sysdigContainerName}`).then(isSysdigRunning => {
-  console.info('tailing existing sysdig container')
-  sysdigProcess = execa('docker', `logs --tail=0 -f ${sysdigContainerName}`.split(' '))
-})
-.catch(err => {
-  console.error(err)
-  console.info('starting a new sysdig container')
-  sysdigProcess = execa('docker', `run -i --name ${sysdigContainerName} --rm --privileged -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro sysdig/sysdig sysdig -pc evt.type=accept`.split(' '))
-})
+var sysdigProcess = execa('docker', `logs --tail=0 -f ${sysdigContainerName}`.split(' '))
 
 // setup web socket configuration on top of webserver
 const server = http.createServer(app)
 const wss = new WebSocketServer({ server: server })
-
-
-function traverse(obj, path) {
-  var i = 0
-  var reach = ''
-  while(i < path.length) {
-    reach = i === 0 ? obj[path[i]] : reach[path[i]]
-    console.log(path[i])
-    if(!reach) {
-      return null
-    }
-    i++
-  }
-  return reach
-}
-
 
 wss.on('connection', function (ws) {
   setInterval(ps, 5000)
@@ -88,6 +63,7 @@ wss.on('connection', function (ws) {
     const ipAddresses = logMessage.match(/\d\d?\d?\.\d\d?\d?\.\d\d?\d?\.\d\d?\d?/g)
     // console.log('matched - ', ipAddresses)
     if (ipAddresses && ipAddresses.length >= 2) {
+      console.log(ipAddresses[0],'to',ipAddresses[1])
       sendMessage('networkRequest', {
         from: ipAddresses[0],
         to: ipAddresses[1]
@@ -104,7 +80,6 @@ wss.on('connection', function (ws) {
       const filteredContainers = containers.filter(container => {
         return container.Names[0] !== `/${sysdigContainerName}`
       })
-      filteredContainers.filter(c => traverse(c,['NetworkSettings','Networks','host','IPAddress'])).forEach(c => console.log(c))
       sendMessage('ps', filteredContainers)
     })
   }
